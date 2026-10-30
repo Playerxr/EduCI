@@ -1,6 +1,7 @@
 package com.example.data.repository
 
 import com.example.data.models.Chapter
+import com.example.data.models.EducationalIllustration
 import com.example.data.models.QuizQuestion
 import com.example.data.models.Subject
 
@@ -1331,4 +1332,154 @@ class EduRepository {
         )
     }
 
+    fun getEducationalIllustrations(): List<EducationalIllustration> {
+        return listOf(
+            // SVT
+            EducationalIllustration(
+                id = "svt_ill_1",
+                subjectId = "svt",
+                title = "Schéma de la Mitose et Méiose Cellulaire",
+                category = "SVT - Schéma Clé",
+                description = "Les phases de division cellulaire : Prophase, Métaphase, Anaphase, Télophase.",
+                keyPoints = listOf(
+                    "Prophase : Condensation de l'ADN en chromosomes visibles à deux chromatides.",
+                    "Métaphase : Disposition des centromères sur la plaque équatoriale.",
+                    "Anaphase : Clivage des centromères et ascension polaire des chromatides.",
+                    "Télophase : Reconstitution de l'enveloppe nucléaire et cytodiérèse."
+                ),
+                defaultWebQuery = "schema mitose meiose phases svt terminale d",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Mitose"
+            ),
+            EducationalIllustration(
+                id = "svt_ill_2",
+                subjectId = "svt",
+                title = "Structure du Neurone & Transmission Synaptique",
+                category = "SVT - Neurophysiologie",
+                description = "Organisation du neurone et franchissement chimique de la fente synaptique.",
+                keyPoints = listOf(
+                    "Sens unique de propagation de l'influx nerveux : dendrites -> corps cellulaire -> axone.",
+                    "Arrivée du potentiel d'action provoquant l'exocytose des vésicules de neurotransmetteurs.",
+                    "Fixation spécifique sur les récepteurs post-synaptiques (dépolarisation ou hyperpolarisation)."
+                ),
+                defaultWebQuery = "schema neurone synapse potentiel action svt terminale",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Synapse"
+            ),
+            EducationalIllustration(
+                id = "svt_ill_3",
+                subjectId = "svt",
+                title = "Cycle de Réplication du VIH & Immunité",
+                category = "SVT - Immunologie",
+                description = "Infection des lymphocytes T4 (CD4) par le virus VIH et chute des défenses de l'organisme.",
+                keyPoints = listOf(
+                    "Fixation de la gp120 virale sur le récepteur CD4 du lymphocyte T4.",
+                    "Rétrotranscription de l'ARN viral en ADN proviral par la transcriptase inverse.",
+                    "Intégration au génome hôte, production de nouveaux virions et destruction progressive des LT4."
+                ),
+                defaultWebQuery = "schema cycle replication vih immunologie svt terminale",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Virus_de_l%27immunod%C3%A9ficience_humaine"
+            ),
+            // PHYSIQUE-CHIMIE
+            EducationalIllustration(
+                id = "pc_ill_1",
+                subjectId = "pc",
+                title = "Circuit RLC Série & Oscillations Électriques",
+                category = "Physique - Électrocinétique",
+                description = "Montage résistance R, bobine L et condensateur C en régime libre et résonance.",
+                keyPoints = listOf(
+                    "Période propre des oscillations libres : T₀ = 2π√(L·C).",
+                    "Amortissement des oscillations provoqué par la résistance R (effet Joule).",
+                    "Résonance d'intensité en régime forcé : l'impédance minimale Z = R quand ω = ω₀."
+                ),
+                defaultWebQuery = "schema circuit rlc serie resonance oscillations terminale",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Circuit_RLC"
+            ),
+            EducationalIllustration(
+                id = "pc_ill_2",
+                subjectId = "pc",
+                title = "Dispositif Expérimental de Dosage Acido-Basique",
+                category = "Chimie - Solutions Aqueuses",
+                description = "Schéma du montage normalisé : burette graduée, bécher, agitateur magnétique et pH-mètre.",
+                keyPoints = listOf(
+                    "Burette graduée contenant la solution titrante (ex: NaOH de concentration C_B).",
+                    "Bécher contenant la solution titrée (volume V_A prélevé à la pipette jaugée).",
+                    "Équivalence acido-basique : n(acide versé) = n(base introduite), méthode des tangentes parallèles."
+                ),
+                defaultWebQuery = "schema montage dosage acido basique ph metre burette terminale",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Titrage"
+            ),
+            EducationalIllustration(
+                id = "pc_ill_3",
+                subjectId = "pc",
+                title = "Trajectoire d'un Projectile en Champ de Pesanteur",
+                category = "Physique - Mécanique Newtonienne",
+                description = "Vitesse initiale v₀, angle de tir α, portée horizontale et flèche maximale.",
+                keyPoints = listOf(
+                    "Application de la 2ème loi de Newton : vecteur accélération a = g (vertical vers le bas).",
+                    "Mouvement décomposé : rectiligne uniforme selon l'axe Ox, uniformément varié selon Oy.",
+                    "Équation de la parabole de tir : y(x) = -g/(2 v₀² cos²α) · x² + (tan α) · x."
+                ),
+                defaultWebQuery = "schema trajectoire projectile parabole fleche portee terminale",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Trajectoire_d%27un_projectile"
+            ),
+            // MATHEMATIQUES
+            EducationalIllustration(
+                id = "math_ill_1",
+                subjectId = "math",
+                title = "Cercle Trigonométrique & Angles Remarquables",
+                category = "Maths - Trigonométrie",
+                description = "Cercle orienté de rayon 1 avec repérage des angles usuels en radians (0, π/6, π/4, π/3, π/2, π).",
+                keyPoints = listOf(
+                    "Axe horizontal des abscisses = Cosinus, Axe vertical des ordonnées = Sinus.",
+                    "Formule fondamentale : cos²(θ) + sin²(θ) = 1 pour tout réel θ.",
+                    "Valeurs clés : cos(π/3) = 1/2, sin(π/3) = √3/2, cos(π/4) = sin(π/4) = √2/2."
+                ),
+                defaultWebQuery = "cercle trigonometrique valeurs remarquables radians cos sin",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Cercle_trigonom%C3%A9trique"
+            ),
+            EducationalIllustration(
+                id = "math_ill_2",
+                subjectId = "math",
+                title = "Courbes des Fonctions Exponentielle et Logarithme",
+                category = "Maths - Fonctions Usuelles",
+                description = "Graphe de ln(x) et exp(x) montrant la bijection réciproque et la symétrie axiale par rapport à y = x.",
+                keyPoints = listOf(
+                    "Fonction exponentielle : définie sur ℝ, strictement positive, croissante, e⁰ = 1.",
+                    "Fonction logarithme népérien : définie sur ]0, +∞[, s'annule en x = 1, ln(e) = 1.",
+                    "Asymptotes : l'axe Ox (y=0) en -∞ pour exp, et l'axe Oy (x=0) en 0⁺ pour ln."
+                ),
+                defaultWebQuery = "graphe fonction logarithme neperien exponentielle symetrie y egal x",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Fonction_exponentielle"
+            ),
+            // HISTOIRE-GEO
+            EducationalIllustration(
+                id = "hg_ill_1",
+                subjectId = "hg",
+                title = "Carte Économique & Réseau Urbain de Côte d'Ivoire",
+                category = "Géographie - Économie Ivoirienne",
+                description = "Organisation spatiale, ports d'Abidjan et San Pedro, boucle du cacao et axes de transport.",
+                keyPoints = listOf(
+                    "Port Autonome d'Abidjan (PAA) : Poumon économique national et sous-régional.",
+                    "Port de San Pedro : 1er port exportateur mondial de fèves de cacao.",
+                    "Boucle du cacao : Déplacement historique de l'Est vers le Centre-Ouest et le Sud-Ouest."
+                ),
+                defaultWebQuery = "carte economique cote d ivoire agriculture ports abidjan san pedro",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/%C3%89conomie_de_la_C%C3%B4te_d%27Ivoire"
+            ),
+            // PHILOSOPHIE & FRANCAIS
+            EducationalIllustration(
+                id = "philo_ill_1",
+                subjectId = "philo",
+                title = "Schéma Heuristique de la Dissertation BAC",
+                category = "Méthodologie - Rédaction Réflexive",
+                description = "Structure normalisée d'une dissertation : Introduction, Problématique, Antithèse, Thèse et Synthèse.",
+                keyPoints = listOf(
+                    "Introduction tripartite : Amorce thématique -> Problématique formulée -> Annonce du plan.",
+                    "Corps du devoir : 2 à 3 parties équilibrées étayées par des arguments conceptuels et citations d'auteurs.",
+                    "Conclusion : Réponse nette à la question initiale sans ajout de nouvelle idée, puis perspective d'ouverture."
+                ),
+                defaultWebQuery = "schema methodologie dissertation philosophique bac",
+                webFallbackUrl = "https://fr.wikipedia.org/wiki/Dissertation"
+            )
+        )
+    }
 }

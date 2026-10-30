@@ -24,8 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.models.Chapter
+import com.example.data.models.EducationalIllustration
 import com.example.data.models.Subject
 import com.example.ui.components.SubjectChipCard
+import com.example.ui.components.WebIllustrationViewerDialog
 
 @Composable
 fun LessonsScreen(
@@ -39,6 +41,7 @@ fun LessonsScreen(
     selectedOptionIndex: Int?,
     isQuizSubmitted: Boolean,
     quizScore: Int,
+    illustrations: List<EducationalIllustration> = emptyList(),
     isOfflineMode: Boolean = false,
     isDarkTheme: Boolean = false,
     onToggleDarkTheme: () -> Unit = {},
@@ -49,12 +52,23 @@ fun LessonsScreen(
     onAddNote: (String, String) -> Unit,
     onSelectQuizOption: (Int) -> Unit,
     onSubmitQuizAnswer: () -> Unit,
-    onNextQuizQuestion: () -> Unit
+    onNextQuizQuestion: () -> Unit,
+    onNavigateToGuideWithChapter: ((String, String) -> Unit)? = null
 ) {
     var showNoteDialog by remember { mutableStateOf(false) }
     var noteTitleInput by remember { mutableStateOf("") }
     var noteContentInput by remember { mutableStateOf("") }
+    var showIllustrationDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    if (showIllustrationDialog) {
+        WebIllustrationViewerDialog(
+            illustrations = illustrations,
+            initialSubjectId = selectedSubjectId,
+            isOfflineMode = isOfflineMode,
+            onDismiss = { showIllustrationDialog = false }
+        )
+    }
 
     var showRewardedAd by remember { mutableStateOf(false) }
     var isHintUnlocked by remember { mutableStateOf(false) }
@@ -278,6 +292,65 @@ fun LessonsScreen(
                                     contentDescription = "Ajouter Note",
                                     tint = MaterialTheme.colorScheme.primary
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // Carte Action : Illustrations Web & Guidage Socratique
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Collections,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Illustrations & Exercices d'appui",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            FilledTonalButton(
+                                onClick = { showIllustrationDialog = true },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(30.dp)
+                            ) {
+                                Icon(Icons.Default.ImageSearch, contentDescription = null, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Schémas Web", fontSize = 10.5.sp)
+                            }
+
+                            if (onNavigateToGuideWithChapter != null) {
+                                Button(
+                                    onClick = { onNavigateToGuideWithChapter(currentChapter.subjectId, currentChapter.id) },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.height(30.dp)
+                                ) {
+                                    Icon(Icons.Default.Psychology, contentDescription = null, modifier = Modifier.size(13.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Guide Exo", fontSize = 10.5.sp)
+                                }
                             }
                         }
                     }

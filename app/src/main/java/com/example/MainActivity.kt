@@ -53,6 +53,9 @@ class MainActivity : ComponentActivity() {
                 val chatMessages by viewModel.chatMessages.collectAsStateWithLifecycle()
                 val chatInputText by viewModel.chatInputText.collectAsStateWithLifecycle()
                 val isBotThinking by viewModel.isBotThinking.collectAsStateWithLifecycle()
+                val educationalIllustrations by viewModel.educationalIllustrations.collectAsStateWithLifecycle()
+                val guidanceSubjectId by viewModel.guidanceSubjectId.collectAsStateWithLifecycle()
+                val guidanceChapterId by viewModel.guidanceChapterId.collectAsStateWithLifecycle()
 
                 val allSubjects by viewModel.allSubjects.collectAsStateWithLifecycle()
                 val selectedSubjects by viewModel.selectedSubjects.collectAsStateWithLifecycle()
@@ -160,7 +163,13 @@ class MainActivity : ComponentActivity() {
                                     onAddNote = { title, content -> viewModel.addPersonalNote(title, content) },
                                     onSelectQuizOption = { viewModel.selectQuizOption(it) },
                                     onSubmitQuizAnswer = { viewModel.submitQuizAnswer() },
-                                    onNextQuizQuestion = { viewModel.nextQuizQuestion() }
+                                    onNextQuizQuestion = { viewModel.nextQuizQuestion() },
+                                    illustrations = educationalIllustrations,
+                                    onNavigateToGuideWithChapter = { subjId, chId ->
+                                        viewModel.setGuidanceSubject(subjId)
+                                        viewModel.setGuidanceChapter(chId)
+                                        viewModel.selectTab(3)
+                                    }
                                 )
 
                                 2 -> QuizPracticeScreen(
@@ -180,8 +189,18 @@ class MainActivity : ComponentActivity() {
                                     chatInputText = chatInputText,
                                     isBotThinking = isBotThinking,
                                     isOfflineMode = isOfflineMode,
+                                    subjects = if (selectedSubjects.isNotEmpty()) selectedSubjects else allSubjects,
+                                    chapters = filteredChapters,
+                                    selectedSubjectId = guidanceSubjectId,
+                                    selectedChapterId = guidanceChapterId,
+                                    selectedLevel = selectedLevel,
+                                    selectedSeries = selectedSeries,
+                                    illustrations = educationalIllustrations,
+                                    onSelectSubject = { viewModel.setGuidanceSubject(it) },
+                                    onSelectChapter = { viewModel.setGuidanceChapter(it) },
                                     onChatInputTextChange = { viewModel.updateChatInput(it) },
-                                    onSendMessage = { customPrompt -> viewModel.sendChatMessage(customPrompt) }
+                                    onSendMessage = { customPrompt -> viewModel.sendChatMessage(customPrompt) },
+                                    onClearHistory = { viewModel.clearChatHistory() }
                                 )
 
                                 4 -> ProfileNotesScreen(

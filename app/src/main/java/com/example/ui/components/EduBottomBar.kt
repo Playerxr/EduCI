@@ -40,7 +40,7 @@ fun EduBottomBar(
         NavItem("Accueil", Icons.Filled.Home, Icons.Outlined.Home, "nav_accueil"),
         NavItem("Cours", Icons.Filled.MenuBook, Icons.Outlined.MenuBook, "nav_cours"),
         NavItem("Quiz", Icons.Filled.Quiz, Icons.Outlined.Quiz, "nav_quiz"),
-        NavItem("EduBot", Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome, "nav_edubot"),
+        NavItem("Guide IA", Icons.Filled.Psychology, Icons.Outlined.Psychology, "nav_edubot"),
         NavItem("Profil", Icons.Filled.Person, Icons.Outlined.Person, "nav_profil")
     )
 

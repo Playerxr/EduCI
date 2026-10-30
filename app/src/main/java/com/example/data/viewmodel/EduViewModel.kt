@@ -110,18 +110,52 @@ class EduViewModel(application: Application) : AndroidViewModel(application) {
     val isQuizSubmitted = MutableStateFlow(false)
     val quizScore = MutableStateFlow(0)
 
-    // EduBot Chat State
+    // Educational Illustrations & Web Resources
+    val educationalIllustrations = MutableStateFlow(repository.getEducationalIllustrations())
+
+    // Guidance Context: Selected Subject and Chapter for Socratic AI
+    val guidanceSubjectId = MutableStateFlow("math")
+    val guidanceChapterId = MutableStateFlow("math_ch1")
+
+    fun setGuidanceSubject(subjectId: String) {
+        guidanceSubjectId.value = subjectId
+        selectedSubjectId.value = subjectId
+        val chList = allChapters.value.filter { it.subjectId == subjectId }
+        if (chList.isNotEmpty()) {
+            guidanceChapterId.value = chList.first().id
+            selectedChapterId.value = chList.first().id
+        }
+    }
+
+    fun setGuidanceChapter(chapterId: String) {
+        guidanceChapterId.value = chapterId
+        selectedChapterId.value = chapterId
+    }
+
+    // EduBot / Socratic Guidance Chat State
     val chatMessages = MutableStateFlow<List<ChatMessage>>(
         listOf(
             ChatMessage(
                 id = "1",
                 sender = "bot",
-                text = "Bonjour ! Je suis EduBot, ton tuteur IA pour le BAC Ivoiriens 🇨🇮. Quelle matière ou quel chapitre veux-tu réviser ensemble aujourd'hui ?"
+                text = "Bienvenue dans ton Guide Pédagogique d'Exercices 🇨🇮 !\n\n🎯 **Méthode Socratique (Apprentissage Actif)** : Je ne résous pas les devoirs à ta place. Mon rôle est de te guider pas à pas, de t'expliquer les formules et de te donner des indices pour que tu réussisses par toi-même au BAC !\n\nChoisis ta matière en haut (Maths, PC, SVT...) et écris ton exercice ou ce qui te bloque."
             )
         )
     )
     val chatInputText = MutableStateFlow("")
     val isBotThinking = MutableStateFlow(false)
+
+    fun clearChatHistory() {
+        val subjObj = allSubjects.value.find { it.id == guidanceSubjectId.value }
+        val subjName = subjObj?.name ?: "cette matière"
+        chatMessages.value = listOf(
+            ChatMessage(
+                id = System.currentTimeMillis().toString(),
+                sender = "bot",
+                text = "Session réinitialisée pour **$subjName** 🎯. Pose ton énoncé ou choisis une action guidée (Débloquer un exercice, Indice progressif, Schémas du Net)."
+            )
+        )
+    }
 
     // Room persistence flows
     val bookmarks = bookmarkDao.getAllBookmarks()
@@ -496,20 +530,33 @@ class EduViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun fetchGeminiOrFallbackReply(userPrompt: String): String {
+        val subjObj = allSubjects.value.find { it.id == guidanceSubjectId.value } 
+            ?: allSubjects.value.find { it.id == selectedSubjectId.value }
+            ?: repository.getDefaultSecondCycleSubjects().first()
+        val subjectName = subjObj.name
+
+        val activeCh = allChapters.value.find { it.id == guidanceChapterId.value } 
+            ?: currentChapter.value
+        val chapterTitle = activeCh?.title ?: "Programme Officiel Second Cycle"
+
+        val level = selectedLevel.value
+        val series = selectedSeries.value
+
         // Quick anti-cheating check for direct cheating requests
         val promptLower = userPrompt.lowercase()
         val isCheatingAttempt = promptLower.contains("triche") || 
                 promptLower.contains("donne moi la reponse de mon devoir") ||
                 promptLower.contains("fais mon devoir a ma place") ||
-                promptLower.contains("resolvant mon examen en direct")
+                promptLower.contains("resolvant mon examen en direct") ||
+                promptLower.contains("fais l'exercice a ma place")
 
         if (isCheatingAttempt) {
-            return "🛡️ **Garde-fou Anti-Tricherie EduBot** :\n\nEn tant qu'assistant pédagogique conforme au système éducatif ivoirien, je ne résous pas les devoirs à votre place et ne fournis pas de réponses pour tricher aux épreuves. \n\nEn revanche, je peux vous expliquer la **méthode de résolution** et les **notions du cours** pour que vous réussissiez le BAC par vos propres compétences !"
+            return "🛡️ **Principe Pédagogique du Guide EduCI** :\n\nEn tant que tuteur socratique conforme au Ministère de l'Éducation Nationale (MENA) de Côte d'Ivoire, je ne fais jamais les exercices à votre place.\n\nEn revanche, voici comment nous allons procéder ensemble :\n1. Donne-moi les données de ton énoncé.\n2. Je t'indique la formule ou le théorème clé de **$subjectName**.\n3. Tu calcules la première étape et je te dis immédiatement si ta démarche est exacte !"
         }
 
         if (isOfflineMode.value) {
-            val offlineResponse = getOfflineLocalReply(userPrompt)
-            return "🔌 **[Mode Hors-ligne Actif]** Réponse locale de la base de données EduCI (0% Data) :\n\n$offlineResponse"
+            val offlineResponse = getOfflineLocalReply(userPrompt, subjectName, chapterTitle)
+            return "🔌 **[Mode Hors-ligne Actif - 0% Data]** Guide méthodologique EduCI pour **$subjectName** :\n\n$offlineResponse"
         }
 
         try {
@@ -518,12 +565,22 @@ class EduViewModel(application: Application) : AndroidViewModel(application) {
                 val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=$apiKey"
                 
                 val sysInstruction = """
-                    Tu es EduBot CI, l'Assistant Pédagogique IA Officiel pour les élèves du Second Cycle (Seconde, Première, Terminale) et du BAC en Côte d'Ivoire.
+                    Tu es le Guide Pédagogique et Tuteur Socratique Officiel d'EduCI pour les élèves de $level Série $series en Côte d'Ivoire (Programme National MENA) 🇨🇮.
                     
-                    RÈGLE D'OR & GARDE-FOU ANTI-TRICHERIE :
-                    - Tu as l'interdiction stricte d'aider à la tricherie scolaire (ne jamais fournir de réponses prêtes à copier lors d'un devoir surveillé, une composition ou un examen, et ne jamais rédiger une évaluation à la place de l'élève).
-                    - Si la question de l'élève demande de tricher ou de faire son devoir à sa place, réponds gentiment : "En tant qu'assistant pédagogique conforme au Ministère de l'Éducation Nationale de Côte d'Ivoire (MENA), je ne résous pas les devoirs à votre place. Voici la méthode et les explications pour vous guider :".
-                    - Sois clair, concis, motivant, structuré en Markdown et centré sur l'apprentissage actif du programme ivoirien.
+                    CONTEXTE SCOLAIRE ACTUEL :
+                    - Matière sélectionnée : $subjectName
+                    - Chapitre / Thème : $chapterTitle
+                    
+                    RÈGLES D'OR DU GUIDAGE PÉDAGOGIQUE (MÉTHODE SOCRATIQUE) :
+                    1. NE JAMAIS RÉSOUDRE L'EXERCICE À LA PLACE DE L'ÉLÈVE ! L'élève doit comprendre et s'entraîner activement.
+                    2. SI L'ÉLÈVE SOUMET UN ÉNONCÉ D'EXERCICE OU DE DEVOIR :
+                       - Étape 1 : Identifie les données utiles et ce qu'il faut déterminer/prouver.
+                       - Étape 2 : Rappelle la formule officielle, le théorème ou la règle de cours nécessaire.
+                       - Étape 3 : Donne la première piste de réflexion ou la première équation à poser.
+                       - Étape 4 : Pose une question claire à l'élève pour qu'il calcule ou raisonne sur cette première étape avant d'aller plus loin !
+                    3. SI L'ÉLÈVE DEMANDE UN INDICE : Fournis un indice progressif (Indice n°1 = direction de raisonnement, Indice n°2 = formule détaillée, Indice n°3 = piège à éviter).
+                    4. SI L'ÉLÈVE PROPOSE UN RÉSULTAT : Valide ce qui est correct, signale l'erreur éventuelle de calcul ou de signe avec bienveillance, sans donner la solution brute.
+                    5. Sois chaleureux, structuré avec des puces Markdown, utilise les notations exactes du programme ivoirien.
                 """.trimIndent()
                 
                 val jsonPayload = JSONObject().apply {
@@ -531,7 +588,7 @@ class EduViewModel(application: Application) : AndroidViewModel(application) {
                         put(JSONObject().apply {
                             put("role", "user")
                             put("parts", JSONArray().apply {
-                                put(JSONObject().put("text", "$sysInstruction\n\nQuestion de l'élève : $userPrompt"))
+                                put(JSONObject().put("text", "$sysInstruction\n\nQuestion ou exercice de l'élève en $subjectName : $userPrompt"))
                             })
                         })
                     })
@@ -562,24 +619,51 @@ class EduViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         // Offline fallback educational response if internet error
-        return getOfflineLocalReply(userPrompt)
+        return getOfflineLocalReply(userPrompt, subjectName, chapterTitle)
     }
 
-    private fun getOfflineLocalReply(userPrompt: String): String {
+    private fun getOfflineLocalReply(userPrompt: String, subjectName: String, chapterTitle: String): String {
+        val p = userPrompt.lowercase()
         return when {
-            userPrompt.contains("methode", ignoreCase = true) || userPrompt.contains("dissertation", ignoreCase = true) ->
-                "Pour réussir la dissertation littéraire ou philosophique au BAC CI :\n\n1. **Introduction** : Amorce (contexte), Définition des termes clés du sujet, Problématique, Annonce claire du plan.\n2. **Développement** : 2 ou 3 parties équilibrées étayées par des arguments solides et des citations d'auteurs (ex: Bernard Dadié, Ahmadou Kourouma, Jean-Paul Sartre, Karl Marx).\n3. **Conclusion** : Bilan synthétique qui répond à la problématique sans introduire de nouveaux éléments, puis ouverture."
+            subjectName.contains("math", ignoreCase = true) -> {
+                when {
+                    p.contains("limite") || p.contains("tvi") ->
+                        "📌 **Méthode d'Analyse TVI & Limites (Maths $chapterTitle)** :\n\n1. **Forme Indéterminée ?** (0/0, ∞/∞, +∞-∞, 0×∞) : Factorise par le terme de plus haut degré ou utilise l'expression conjuguée.\n2. **TVI (Théorème des Valeurs Intermédiaires)** :\n   - Vérifie la continuité de f sur [a, b].\n   - Calcule f(a) et f(b) et montre que 0 est compris entre f(a) et f(b) (f(a)·f(b) < 0).\n   - Conclus : Il existe au moins un réel α tel que f(α) = 0.\n\n💡 *Quel calcul bloques-tu précisément ? Écris ton début d'expression !*"
 
-            userPrompt.contains("tvi", ignoreCase = true) || userPrompt.contains("math", ignoreCase = true) ->
-                "En Mathématiques (Terminale D/C) : Le Théorème des Valeurs Intermédiaires (TVI) nécessite 2 conditions indispensables :\n1. La fonction f doit être continue sur l'intervalle [a, b].\n2. Le nombre k doit être compris entre f(a) et f(b).\n\n💡 *Astuce BAC* : Pour prouver l'existence d'une unique solution α, vous devez impérativement justifier que la fonction f est strictement monotone (uniquement croissante ou uniquement décroissante) sur cet intervalle !"
+                    p.contains("complexe") || p.contains("forme trigonométrique") ->
+                        "📌 **Méthode Nombres Complexes** :\n\n- Module : |z| = r = √(a² + b²)\n- Argument θ : cos(θ) = a/r et sin(θ) = b/r\n- Forme trigonométrique : z = r(cos θ + i sin θ) = r e^(iθ)\n\n💡 *Dis-moi les valeurs de a et b de ton énoncé pour qu'on calcule r ensemble !*"
 
-            userPrompt.contains("bac", ignoreCase = true) || userPrompt.contains("examen", ignoreCase = true) ->
-                "Le secret de la mention au BAC ivoirien 🇨🇮 repose sur :\n- Un entraînement régulier avec les annales et anciennes épreuves (2020-2025).\n- La maîtrise des formules de Physique-Chimie et théorèmes de Mathématiques.\n- Les fiches de révisions condensées d'EduCI.\n- L'autodiscipline et des sessions d'études quotidiennes d'au moins 2 heures."
+                    else ->
+                        "📌 **Guidage Mathématiques - $chapterTitle** :\n\nPour avancer sans te bloquer :\n1. Écris clairement la fonction ou les équations données.\n2. Précise le domaine de définition (ex: x ≠ 0, x > 0 pour ln).\n3. Calcule la dérivée f'(x) si l'exercice porte sur les variations.\n\nQuelle est la première question de ton exercice ?"
+                }
+            }
+
+            subjectName.contains("physique", ignoreCase = true) || subjectName.contains("chimie", ignoreCase = true) -> {
+                when {
+                    p.contains("newton") || p.contains("mouvement") || p.contains("projectile") ->
+                        "⚡ **Guidage Mécanique Newtonienne (PC)** :\n\n1. Définis le système étudié (ex: le solide S) et le référentiel (terrestre supposé galiléen).\n2. Fais le bilan des forces appliquées (Poids P = mg, frottements f, réaction R).\n3. Applique la 2ème loi de Newton : Σ F_ext = m · a.\n4. Projette sur les axes (Ox, Oy) pour obtenir les équations différentielles.\n\n💡 *Quelles forces as-tu identifiées dans ton énoncé ?*"
+
+                    p.contains("dosage") || p.contains("acide") || p.contains("ph") ->
+                        "⚗️ **Guidage Chimie des Solutions** :\n\n- Équation bilan du dosage : Acide + Base ⟶ Sel + Eau.\n- À l'équivalence acido-basique : n_A (acide versé) = n_B (base introduite).\n- Relation fondamentale : C_A · V_A = C_B · V_E.\n\n💡 *Quelle grandeur recherches-tu (C_A ou V_E) ?*"
+
+                    else ->
+                        "⚡ **Guidage Physique-Chimie - $chapterTitle** :\n\n1. Note toutes les grandeurs données avec leurs unités SI (m, s, kg, V, A, mol/L).\n2. Repère la loi physique correspondante (ex: Newton, Ohm, décroissance radioactive, pH).\n3. Isole l'inconnue avant de faire l'application numérique.\n\nQuel est l'énoncé de ta question ?"
+                }
+            }
+
+            subjectName.contains("svt", ignoreCase = true) -> {
+                "🧬 **Guidage SVT - $chapterTitle** :\n\n- En SVT au BAC CI, applique la démarche scientifique : **Je vois que... (Constat) + Or je sais que... (Rappel du cours) + Donc j'en déduis que... (Conclusion)**.\n- Pour les schémas : pense au titre complet, aux flèches horizontales avec légende précise, et à l'échelle.\n- Ouvre l'outil **Illustrations du Net** pour visualiser le schéma officiel du chapitre !"
+            }
+
+            subjectName.contains("philo", ignoreCase = true) || subjectName.contains("français", ignoreCase = true) -> {
+                "🏛️ **Méthodologie Épreuve Littéraire & Philo** :\n\n1. **Analyse du sujet** : Définis chaque terme clé et leurs relations logiques (opposition, cause, conséquence).\n2. **Problématique** : Reformule le problème central sous forme de tension philosophique (ex: \"Dans quelle mesure peut-on affirmer que...\").\n3. **Plan dialectique** : Thèse (affirmation) ⟶ Antithèse (limite/objection) ⟶ Synthèse (dépassement fondé)."
+            }
 
             else ->
-                "C'est une excellente question sur le programme scolaire ivoirien ! Comme nous sommes hors-ligne ou que la connexion est limitée, n'hésitez pas à consulter les fiches de cours détaillées (de l'onglet **Cours**) et à tester vos connaissances avec le **Quiz Chrono** pour valider chaque notion."
+                "🇨🇮 **Guide Pédagogique EduCI ($subjectName - $chapterTitle)** :\n\nPour progresser efficacement dans cette matière :\n1. Revois les définitions indispensables du cours.\n2. Note les données clés de ton exercice.\n3. Identifie la question précise qui te bloque.\n\nPose-moi ta question spécifique pour que nous la débloquions ensemble étape par étape !"
         }
     }
+
 
     val authManager = AuthManager()
 

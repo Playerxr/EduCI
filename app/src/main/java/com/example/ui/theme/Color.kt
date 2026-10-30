@@ -12,6 +12,7 @@ val IndigoLight = Color(0xFFEFF6FF)
 
 val EmeraldSuccess = Color(0xFF059669)
 val EmeraldLight = Color(0xFFD1FAE5)
+val GreenSuccess = EmeraldSuccess
 
 val AmberBadge = Color(0xFFD97706)
 val RoseBadge = Color(0xFFE11D48)

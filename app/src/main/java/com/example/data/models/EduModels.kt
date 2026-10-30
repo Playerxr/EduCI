@@ -254,4 +254,15 @@ data class HistoriqueEntity(
     val feedback: String = ""
 )
 
+data class EducationalIllustration(
+    val id: String,
+    val subjectId: String,
+    val title: String,
+    val category: String,
+    val description: String,
+    val keyPoints: List<String>,
+    val defaultWebQuery: String,
+    val webFallbackUrl: String
+)
+
 
