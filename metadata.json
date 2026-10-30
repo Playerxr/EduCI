@@ -1,0 +1,6 @@
+{
+  "name": "EduCI",
+  "description": "Plateforme d'apprentissage et de révision BAC Second Cycle pour les élèves de Côte d'Ivoire avec EduBot IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
